@@ -137,4 +137,47 @@ describe 'Flow Control' do
       expect(result["result.how_is_the_model"]).to be_nil
     end
   end
+
+  context 'Emiting fail fasts manually' do
+    module Song03
+      class Create < Trailblazer::Operation
+        step :filter_params!
+        step :record!
+        failure :handle_fail!
+
+        def filter_params!(options, params:, **)
+          unless params.has_key?(:id)
+            options["result.params"] = "No ID in params!"
+            return Railway.fail_fast!
+          end
+          true
+        end
+
+        def handle_fail!(options, **)
+          options["my.status"] = "Broken!"
+        end
+
+        def record!(options, **)
+          options["record"] = "There!"
+        end
+      end
+    end
+
+    it 'id is there' do
+      result = Song03::Create.({id: nil})
+
+      expect(result.success?).to be_truthy
+      expect(result["record"]).to eq('There!')
+      expect(result["result.params"]).to be_nil
+      expect(result["my.status"]).to be_nil
+    end
+
+    it 'id is missing' do
+      result = Song03::Create.({})
+
+      expect(result.success?).to be_falsy
+      expect(result["my.status"]).to be_nil
+      expect(result["result.params"]).to eq('No ID in params!')
+    end
+  end
 end
