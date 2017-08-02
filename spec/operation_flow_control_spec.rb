@@ -180,4 +180,36 @@ describe 'Flow Control' do
       expect(result["result.params"]).to eq('No ID in params!')
     end
   end
+
+  context 'Success' do
+    module Song04
+      class Create < Trailblazer::Operation
+        step :id_present?
+        success :send_email
+
+        def id_present?(options, params:, **)
+          return false unless params.has_key?(:id)
+          true
+        end
+
+        def send_email(options, params:, **)
+          options['result.email'] = 'Sent!'
+        end
+      end
+    end
+
+    it 'id is there' do
+      result = Song04::Create.({id: nil})
+
+      expect(result.success?).to be_truthy
+      expect(result["result.email"]).to eq('Sent!')
+    end
+
+    it 'id is missing' do
+      result = Song04::Create.({})
+
+      expect(result.success?).to be_falsy
+      expect(result["result.email"]).to be_nil
+    end
+  end
 end
