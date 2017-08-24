@@ -29,7 +29,6 @@ describe 'Flow Control' do
 
     it 'success' do
       result = Song00::Create.({how_is_the_model: true, how_is_the_model_2: true})
-
       expect(result.success?).to be_truthy
     end
 
